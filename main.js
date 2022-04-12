@@ -156,10 +156,13 @@ function main() {
       //responseType: 'arraybuffer',
       responseType: 'blob',
       onload: (req) => {
+        console.log("LOAD");
         const reader = new FileReader();
         reader.readAsDataURL(req.response);
         reader.onload = function() {
-          var div = image2div[req.response.name];
+          var url = req.responseURL;
+          var fileName = url.substring(url.lastIndexOf("/") + 1);
+          var div = image2div[fileName];
           div.style['background-image'] = 'url("' + reader.result + '")';
           //console.log(image2div[req.response.name])
         };
