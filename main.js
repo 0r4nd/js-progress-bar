@@ -73,21 +73,39 @@ Dom.loadImage = function(elem, src, onload) {
 
 
 
+
+function getFileName(url) {
+  return url.substring(url.lastIndexOf("/") + 1);
+}
+
 function loadFile(opts = {}) {
   var req = new XMLHttpRequest();
 
   req.onprogress = e => {
     if (e.lengthComputable) {
       var percentage = Math.round((e.loaded/e.total)*100);
-      console.log("percent " + percentage + '%' );
+      loadFile.filesPercentage[this.responseURL] = percentage;
+
+      var totalPercentage = 0;
+      var keys = Object.keys(loadFile.filesPercentage);
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        //console.log(key + ":" + loadFile.filesPercent[key]);
+        totalPercentage += loadFile.filesPercentage[key];
+      }
+      totalPercentage /= keys.length;
+      
+      console.log("total percent " + totalPercentage + '%' );
+
+      loadFile.prevTotalPercentage = totalPercentage;
     } else {
       console.log("Unable to compute progress information since the total size is unknown");
     }
   };
 
-  req.onreadystatechange = () => {
+  req.onreadystatechange = function() {
 
-    switch (req.readyState) {
+    switch (this.readyState) {
       // Uninitialized: État initial.
       default:
       case 0: 
@@ -95,6 +113,9 @@ function loadFile(opts = {}) {
 
       // Open: La méthode open a été exécutée avec succès.
       case 1:
+        //console.log("open " + getFileName(req.responseURL))
+        console.log("open ")
+        //loadFile.files
         break;
 
       // Sent: La requête a été correctement envoyée, mais aucune donnée n’a encore été reçue.
@@ -103,12 +124,15 @@ function loadFile(opts = {}) {
 
       // Receiving: Des données sont en cours de réception.
       case 3:
+        console.log("receiving ")
+        loadFile.filesPercentage[this.responseURL] = 0;
         break;
 
       // Loaded: Le traitement de la requête est fini.
       case 4:
-        if (req.status === 200) {
-          if (typeof(opts.onload) == 'function') opts.onload(req);
+        if (this.status === 200) {
+          loadFile.filesPercentage[this.responseURL] = undefined;
+          if (typeof(opts.onload) == 'function') opts.onload(this);
         } else {
           //if (typeof(opts.onerror) == 'function') opts.onerror(req);
         }
@@ -125,6 +149,8 @@ function loadFile(opts = {}) {
   //request.responseType = 'arraybuffer';
   req.send();
 };
+loadFile.prevTotalPercentage = 0;
+loadFile.filesPercentage = {};
 
 
 
